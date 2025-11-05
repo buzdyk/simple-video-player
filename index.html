@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JW Player Test</title>
+    <!-- JW Player Script - Using CDN version -->
+    <script src="https://cdn.jwplayer.com/libraries/KB5zFt7A.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        #player-container {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #url-input-container {
+            margin-bottom: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+<h1>JW Player CloudFront Test</h1>
+
+<div id="url-input-container">
+    <input type="text"
+           id="video-url"
+           placeholder="Enter CloudFront URL (e.g., https://d123456.cloudfront.net/path/index.m3u8)"
+           value="">
+    <button onclick="loadVideo()">Load Video</button>
+    <button onclick="loadSampleHLS()">Load Sample HLS</button>
+    <button onclick="loadSampleMP4()">Load Sample MP4</button>
+</div>
+
+<div id="player-container">
+    <div id="myPlayer"></div>
+</div>
+
+<div class="info">
+    <strong>Info:</strong>
+    <ul>
+        <li>Supports both MP4 and HLS (.m3u8) streams</li>
+        <li>For HLS: Use the manifest URL (index.m3u8 or master.m3u8)</li>
+        <li>For MP4: Use direct video file URL</li>
+        <li>Click sample buttons to test with public videos</li>
+    </ul>
+</div>
+
+<script>
+    // Initialize player
+    let playerInstance = jwplayer("myPlayer");
+
+    // Default configuration
+    function setupPlayer(videoUrl) {
+        // Better HLS detection - check for .m3u8 extension
+        const isHLS = /\.m3u8(\?.*)?$/i.test(videoUrl);
+
+        console.log('Loading URL:', videoUrl);
+        console.log('Detected type:', isHLS ? 'HLS' : 'MP4');
+
+        const config = {
+            sources: [{
+                file: videoUrl,
+                type: isHLS ? 'hls' : 'mp4'
+            }],
+            width: "100%",
+            aspectratio: "16:9",
+            autostart: false,
+            controls: true,
+            displaytitle: true,
+            displaydescription: true,
+            stretching: "uniform",
+            primary: "html5",
+            hlshtml: true,
+            title: isHLS ? "HLS Stream" : "MP4 Video",
+            description: videoUrl,
+            image: "", // Add poster image URL if needed
+            cast: {},
+            playbackRateControls: [0.5, 1, 1.25, 1.5, 2]
+        };
+
+        // Setup player
+        playerInstance.setup(config);
+
+        // Add event listeners
+        playerInstance.on('error', function(e) {
+            console.error("Player Error:", e);
+            alert("Error loading video: " + (e.message || 'Unknown error'));
+        });
+
+        playerInstance.on('ready', function() {
+            console.log("Player ready");
+        });
+
+        playerInstance.on('play', function() {
+            console.log("Video playing");
+        });
+
+        playerInstance.on('setupError', function(e) {
+            console.error("Setup Error:", e);
+            alert("Setup error: " + (e.message || 'Unknown error'));
+        });
+
+        playerInstance.on('levelsChanged', function(e) {
+            console.log('Quality levels available:', e.levels);
+        });
+
+        playerInstance.on('levelsChanged', function(e) {
+            if (e.currentQuality >= 0) {
+                console.log('Current quality:', e.levels[e.currentQuality]);
+            }
+        });
+    }
+
+    // Load video from input
+    function loadVideo() {
+        const url = document.getElementById('video-url').value.trim();
+        if (!url) {
+            alert('Please enter a video URL');
+            return;
+        }
+
+        console.log('Loading video:', url);
+        setupPlayer(url);
+    }
+
+    // Load sample HLS stream (public test stream)
+    function loadSampleHLS() {
+        const sampleHLS = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+        document.getElementById('video-url').value = sampleHLS;
+        setupPlayer(sampleHLS);
+    }
+
+    // Load sample MP4 (public test video)
+    function loadSampleMP4() {
+        const sampleMP4 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        document.getElementById('video-url').value = sampleMP4;
+        setupPlayer(sampleMP4);
+    }
+
+    // Load sample on page load
+    window.onload = function() {
+        loadSampleMP4();
+    };
+
+    // Allow Enter key to load video
+    document.getElementById('video-url').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadVideo();
+        }
+    });
+</script>
+</body>
+</html>
